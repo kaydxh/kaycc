@@ -6,19 +6,19 @@
 #include <pthread.h>
 
 namespace kaycc {
-	class Condition : boos::noncopyable {
+	class Condition : boost::noncopyable {
 		public:
 			explicit Condition(MutexLock &mutex)
 				: mutex_(mutex) {
-				KCHECK(pthread_cond_init(pcond_, NULL);
+				KCHECK(pthread_cond_init(&pcond_, NULL));
 			}
 
 			~Condition() {
-				KCHECK(pthread_cond_destory(&pcond_);
+				KCHECK(pthread_cond_destroy(&pcond_));
 			}
 
 			void wait() {
-				MutexLock::UnassignGuard ug(mutex_);
+				MutexLock::UnassignGuard ug(mutex_); //线程刮起前，先清空mutex_的holder线程id， pthread_cond_wait返回后，在赋值holder线程id
 				KCHECK(pthread_cond_wait(&pcond_, mutex_.getPthreadMutex()));
 			}
 

@@ -22,7 +22,7 @@ namespace currentthread {
 
 	const bool sameType = boost::is_same<int, pid_t>::value;
 	BOOST_STATIC_ASSERT(sameType);
-}
+} //end currentthread
 
 namespace detail {
 	pid_t gettid() {
@@ -114,7 +114,7 @@ void currentthread::cacheTid() {
 }
 
 bool currentthread::isMainThread() {
-	return tid() == ::getpid();
+	return tid() == ::getpid(); //getpid()得到的是进程的pid，在内核中，每个线程都有自己的PID，要得到线程的PID,必须用syscall(SYS_gettid);
 }
 
 void currentthread::sleepUsec(int64_t usec) {

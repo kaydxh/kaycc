@@ -1,6 +1,8 @@
 #ifndef KAYCC_BASE_CURRENTTHREAD_H
 #define KAYCC_BASE_CURRENTTHREAD_H
 
+#include <stdint.h>
+
 namespace kaycc {
 namespace currentthread {
 	// __thread 表明每个线程有一份独立实体
@@ -8,7 +10,9 @@ namespace currentthread {
 	extern __thread char t_tidString[32];
 	extern __thread int t_tidStringLength;
 	extern __thread const char * t_threadName;
-	
+
+	const int64_t kMicroSecondsPerSecond = 1e6;
+
 	void cacheTid();
 
 	inline int tid() {
@@ -19,15 +23,15 @@ namespace currentthread {
 		return t_cachedTid;
 	}
 
-	inline const char * tidString() const {
+	inline const char * tidString() {
 		return t_tidString;
 	}
 
-	inline int tidStringLength() const {
+	inline int tidStringLength() {
 		return t_tidStringLength;
 	}
 
-	inline const * name () const {
+	inline const char * name () {
 		return t_threadName;
 	}
 

@@ -1,5 +1,5 @@
-#ifndef KAYCC_BASE_H
-#define KAYCC_BASE_H
+#ifndef KAYCC_BASE_ATOMIC_H
+#define KAYCC_BASE_ATOMIC_H
 
 #include <boost/noncopyable.hpp>
 #include <stdint.h>
@@ -14,7 +14,8 @@ namespace atomics {
 				: value_(0) {
 			}
 
-			T get() const {
+
+			T get() {
 				return __sync_val_compare_and_swap(&value_, 0, 0);
 			}
 

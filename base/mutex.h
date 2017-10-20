@@ -9,7 +9,7 @@
 #ifdef CHECK_PTHREAD_RETURN_VALUE
 
 #ifdef NDEBUG //没有定义NDEBUG时，assert.h定声明了__assert_perror_fail，所以这里只在定义NDEBUG时，声明__assert_perror_fail，保证__assert_perror_fail一直都被声明
-__BEGIN_DECLS //# define __BEGIN_DECLS extern "C" {
+__BEGIN_DECLS //# define __BEGIN_DECLS extern "C" {    用C++编译器统一处理
 extern void __assert_perror_fail(int errnum,
 								const char *file,
 								unsigned int line,
@@ -30,8 +30,10 @@ __typeof__(&a) b;//It   is   equivalent   to  'int  b';
 __typeof__(__typeof__(int *)[4])   z; //It   is   equivalent   to  'int  *z[4]';
 */
 
+
+//if (__builtin_expect(errnum != 0, 0)) ,代表errnum != 0的可能性不大，一般不进入该if语句
 #define KCHECK(ret) ({ __typeof__ (ret) errnum = (ret);  \
-						if (__builtin_expect(errnum != 0, 0))  \
+						if (__builtin_expect(errnum != 0, 0))  \ 
 						__assert_perror_fail (errnum, __FILE__, __LINE__, __func__);}) 
 
 #else //undef CHECK_PTHREAD_RETURN_VALUE
@@ -53,7 +55,7 @@ namespace kaycc {
 				}
 			~MutexLock() {
 				assert(holder_ == 0);
-				KCHECK(pthread_mutex_destory(&mutex_));
+				KCHECK(pthread_mutex_destroy(&mutex_));
 			}
 
 			bool isLockedByThisThread() const {
@@ -79,12 +81,30 @@ namespace kaycc {
 			}
 
 		private:
+			friend class Condition;
+
+			class UnassignGuard : boost::noncopyable {
+				public:
+					UnassignGuard(MutexLock &owner)
+						: owner_(owner) {
+							owner_.unassignHolder(); //对mutex_的holder线程id清空, 
+						}
+
+					~UnassignGuard() {
+						owner_.assignHolder(); //对mutex_的holder赋值线程id
+					}
+
+				private:
+					MutexLock &owner_;
+			};
+
+		private:
 			void assignHolder() {
-				holder_ = currentthread::tid();
+				holder_ = currentthread::tid(); //对mutex_的holder赋值线程id
 			}
 
 			void unassignHolder() {
-				holder_ = 0;
+				holder_ = 0; //对mutex_的holder线程id清空
 			}
 
 		private:
@@ -94,7 +114,7 @@ namespace kaycc {
 
 	class MutexLockGuard : boost::noncopyable {
 		public:
-			explict MutexLockGuard(const MutexLockGuard &mutex)
+			explicit MutexLockGuard(MutexLock &mutex) //这里不能为const引用,non-const指针/引用可以转换为const指针引用，反之不行
 				: mutex_(mutex) {
 					mutex_.lock();
 				}
@@ -107,3 +127,7 @@ namespace kaycc {
 			MutexLock &mutex_;
 	};
 }
+
+#define MutexLockGuard(x) error "Missing guard object name" //定义这个宏时阻止这样错误使用，MutexLockGuard(mutex_);临时变量获取锁后立马又释放了锁
+
+#endif
