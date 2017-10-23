@@ -32,9 +32,9 @@ __typeof__(__typeof__(int *)[4])   z; //It   is   equivalent   to  'int  *z[4]';
 
 
 //if (__builtin_expect(errnum != 0, 0)) ,代表errnum != 0的可能性不大，一般不进入该if语句
-#define KCHECK(ret) ({ __typeof__ (ret) errnum = (ret);  \
-						if (__builtin_expect(errnum != 0, 0))  \ 
-						__assert_perror_fail (errnum, __FILE__, __LINE__, __func__);}) 
+#define KCHECK(ret) ({ __typeof__ (ret) errnum = (ret);	\
+						if (__builtin_expect(errnum != 0, 0))  \
+							__assert_perror_fail (errnum, __FILE__, __LINE__, __func__);}) 
 
 #else //undef CHECK_PTHREAD_RETURN_VALUE
 

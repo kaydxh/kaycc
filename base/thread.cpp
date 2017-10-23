@@ -109,7 +109,7 @@ using namespace kaycc;
 void currentthread::cacheTid() {
 	if (t_cachedTid == 0) {
 		t_cachedTid = detail::gettid(); //使用了detail的gettid()，所以currentthread的函数放在这里定义
-		t_tidStringLength = snprintf(t_tidString, sizeof(t_tidString), "%s5d", t_cachedTid);
+		t_tidStringLength = snprintf(t_tidString, sizeof(t_tidString), "%5d", t_cachedTid);
 	}
 }
 
