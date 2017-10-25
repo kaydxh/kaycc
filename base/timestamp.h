@@ -7,7 +7,8 @@
 namespace kaycc {
     class Timestamp : public kaycc::copyable,
                       public boost::equality_comparable<Timestamp>,
-                      public boost::less_than_comparable<Timestamp> {
+                      public boost::less_than_comparable<Timestamp> { //表示可以作大小比较（!=,>,<=,>=; 在实现时，只需实现<
+                                                                      //和==即可，其他可以自动生成;比较运算符的重载是以友元的形式实现的。
 
     public:
         Timestamp()
@@ -20,6 +21,7 @@ namespace kaycc {
 
             }
 
+        ////两个时间戳进行交换
         void swap(Timestamp& that) {
             std::swap(microSecondsSinceEpoch_, that.microSecondsSinceEpoch_);
         }
@@ -53,7 +55,7 @@ namespace kaycc {
         static const int kMicroSecondsPerSecond = 1000000;
 
     private:
-        int64_t microSecondsSinceEpoch_;
+        int64_t microSecondsSinceEpoch_; //epoch到现在的微秒数
 
     };
 
@@ -66,11 +68,12 @@ namespace kaycc {
     }
 
     inline double timeDifference(Timestamp high, Timestamp low) {
-        static_cast<double>((high.microSecondsSinceEpoch() - low.microSecondsSinceEpoch())) / Timestamp::kMicroSecondsPerSecond;
+        int64_t diff = high.microSecondsSinceEpoch() - low.microSecondsSinceEpoch(); //微秒
+        return static_cast<double>(diff) / Timestamp::kMicroSecondsPerSecond; //转为秒
     }
 
     inline Timestamp addTime(Timestamp timestamp, double seconds) {
-        int64_t delta = static_cast<int64_t>(seconds * Timestamp::kMicroSecondsPerSecond);
+        int64_t delta = static_cast<int64_t>(seconds * Timestamp::kMicroSecondsPerSecond); //秒转为微秒
         return Timestamp(timestamp.microSecondsSinceEpoch() + delta);
     }
 }

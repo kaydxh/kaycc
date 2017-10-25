@@ -25,8 +25,9 @@ set(CXX_FLAGS
 
 
 aux_source_directory(./base BASE)
+aux_source_directory(./net  NET)
 
-add_library(${PROJECT_NAME} ${BASE})
+add_library(${PROJECT_NAME} ${BASE} ${NET})
 
 target_link_libraries(${PROJECT_NAME} pthread)
 #add_subdirectory(kaycc/base)
