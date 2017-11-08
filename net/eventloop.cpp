@@ -11,7 +11,6 @@
 #include <signal.h>
 #include <sys/eventfd.h>
 #include <unistd.h>
-#include <iostream>
 
 using namespace kaycc;
 using namespace kaycc::net;
@@ -27,7 +26,7 @@ namespace {
     int createEventfd() {
         int evtfd = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
         if (evtfd < 0) {
-            std::cout << "eventfd failed." << std::endl;
+            LOG << "eventfd failed." << std::endl;
             abort();
         }
 
@@ -64,9 +63,9 @@ EventLoop::EventLoop()
       wakeupFd_(createEventfd()),
       wakeupChannel_(new Channel(this, wakeupFd_)),
       currentActiveChannel_(NULL) {
-        std::cout << "EventLoop created " << this << " in thread " << threadId_ << std::endl;
+        LOG << "EventLoop created " << this << " in thread " << threadId_ << std::endl;
         if (t_loopInThisThread) {
-            std::cout << "another event loop " << t_loopInThisThread << " exists in this thread " << threadId_ << std::endl; 
+            LOG << "another event loop " << t_loopInThisThread << " exists in this thread " << threadId_ << std::endl; 
 
         } else {
             t_loopInThisThread = this;
@@ -83,7 +82,7 @@ EventLoop::EventLoop()
 }
 
 EventLoop::~EventLoop() {
-    std::cout << "EventLoop " << this << " of thread " << threadId_
+    LOG << "EventLoop " << this << " of thread " << threadId_
         << " destructs in thread " << currentthread::tid() << std::endl;
 
     wakeupChannel_->disableAll();
@@ -99,7 +98,7 @@ void EventLoop::loop() {
     looping_ = true;
     quit_ = false;
 
-    std::cout << "EventLoop " << this << " start looping" << std::endl;
+    LOG << "EventLoop " << this << " start looping" << std::endl;
 
     while (!quit_) {
         // 清理已激活事件通道的队列
@@ -130,7 +129,7 @@ void EventLoop::loop() {
         doPendingFunctors();
     }
 
-    std::cout << "EventLoop " << this << " stop looping" << std::endl;
+    LOG << "EventLoop " << this << " stop looping" << std::endl;
     looping_ = false;
 
 }
@@ -229,7 +228,7 @@ bool EventLoop::hasChannel(Channel* channel) {
 
 // 如果创建Reactor的线程和运行Reactor的线程不同就退出进程  
 void EventLoop::abortNotInLoopThread() {
-    std::cout << "EventLoop::abortNotInLoopThread - EventLoop " << this 
+    LOG << "EventLoop::abortNotInLoopThread - EventLoop " << this 
         << " was created in threadId_ =" << threadId_
         << ", current thread id =" << currentthread::tid() << std::endl;
     abort();
@@ -243,7 +242,7 @@ void EventLoop::wakeup() {
     uint64_t one = 1;
     ssize_t n = sockets::write(wakeupFd_, &one, sizeof(one));
     if (n != sizeof(one)) {
-        std::cout << "EventLoop::wakeup() writes " << n << " bytes instead of 8" << std::endl;
+        LOG << "EventLoop::wakeup() writes " << n << " bytes instead of 8" << std::endl;
     }
 
 }
@@ -259,7 +258,7 @@ void EventLoop::handleRead() {
     uint64_t one = 1;
     ssize_t n = sockets::read(wakeupFd_, &one, sizeof(one));
     if (n != sizeof(one)) {
-        std::cout << "EventLoop::handleRead() reads " << n << " bytes instead of 8" << std::endl;
+        LOG << "EventLoop::handleRead() reads " << n << " bytes instead of 8" << std::endl;
     }
 }
 
@@ -289,7 +288,7 @@ void EventLoop::printActiveChannels() const {
     for (ChannelList::const_iterator it = activeChannels_.begin();
         it != activeChannels_.end(); ++it) {
         const Channel* ch = *it;
-        std::cout << "{" << ch->reventsToString() << "}" << std::endl; 
+        LOG << "{" << ch->reventsToString() << "}" << std::endl; 
     }
 
 }

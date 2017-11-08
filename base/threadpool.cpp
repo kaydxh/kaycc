@@ -3,7 +3,7 @@
 #include <boost/bind.hpp>
 #include <assert.h>
 #include <stdio.h>
-#include <iostream>
+#include "log.h"
 
 using namespace kaycc;
 
@@ -118,10 +118,10 @@ void ThreadPool::runInThread() {
             }
         }
     } catch (std::exception& ex) {
-        std::cout << "exception caught in ThreadPool " << name_ << " ,reason: " << ex.what() << std::endl;
+        LOG << "exception caught in ThreadPool " << name_ << " ,reason: " << ex.what() << std::endl;
         abort();
     } catch (...) {
-        std::cout << "unknown exception caught in ThreadPool " << name_ << std::endl;
+        LOG << "unknown exception caught in ThreadPool " << name_ << std::endl;
         throw;
     }
 

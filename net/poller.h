@@ -7,6 +7,7 @@
 
 #include "../base/timestamp.h"
 #include "eventloop.h"
+#include "../base/log.h"
 
 //通常一个Reactor对应一个轮询器，轮询器用于等待事件的发生
 

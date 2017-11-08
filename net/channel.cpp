@@ -1,8 +1,8 @@
 #include "channel.h"
 #include "eventloop.h"
+#include "../base/log.h"
 
 #include <sstream>
-#include <iostream>
 
 #include <poll.h>
 using namespace kaycc;
@@ -22,7 +22,7 @@ Channel::Channel(EventLoop* loop, int fd)
       fd_(fd),
       events_(0),
       revents_(0),
-      index_(0),
+      index_(-1),
       tied_(false),
       eventHandling_(false),
       addedToLoop_(false) {
@@ -79,7 +79,7 @@ void Channel::handleEventWithGuard(Timestamp receiveTime) {
     }
 
     if (revents_ & POLLNVAL) {
-        std::cout << "fd = " << fd_ << " Channel::handleEvent POLLNVAL" << std::endl;
+        LOG << "fd = " << fd_ << " Channel::handleEvent POLLNVAL" << std::endl;
     }
 
     //POLLERR，仅用于内核设置传出参数revents，表示设备发生错误

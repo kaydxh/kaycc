@@ -1,6 +1,7 @@
 #include "socketsops.h"
 
 #include "../base/types.h"
+#include "../base/log.h"
 #include "endian.h"
 
 #include <errno.h>
@@ -9,8 +10,6 @@
 #include <string.h> //bzero
 #include <unistd.h>
 #include <assert.h>
-
-#include <iostream>
 
 using namespace kaycc;
 using namespace kaycc::net;
@@ -66,7 +65,7 @@ int sockets::createNonblockingOrDie(sa_family_t family) {
 #if VALGRIND
     int sockfd = ::socket(family, SOCK_STREAM, IPPROTO_TCP);
     if (sockfd < 0) {
-        std::cout << "sockets::createNonblockingOrDie faild: " << sockfd << std::endl;
+        LOG << "sockets::createNonblockingOrDie faild: " << sockfd << std::endl;
     }
 
     //设置非阻塞和close on exec 
@@ -75,7 +74,7 @@ int sockets::createNonblockingOrDie(sa_family_t family) {
 #else
     int sockfd = ::socket(family, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP); 
     if (sockfd < 0) {
-        std::cout << "sockets::createNonblockingOrDie faild: " << sockfd << std::endl;
+        LOG << "sockets::createNonblockingOrDie faild: " << sockfd << std::endl;
     }
 #endif
 
@@ -85,7 +84,7 @@ int sockets::createNonblockingOrDie(sa_family_t family) {
 void sockets::bindOrDie(int sockfd, const struct sockaddr* addr) {
     int ret = ::bind(sockfd, addr, static_cast<socklen_t>(sizeof(struct sockaddr_in6)));
     if (ret < 0) {
-        std::cout << "sockets::bindOrDie failed: " << ret << std::endl;
+        LOG << "sockets::bindOrDie failed: " << ret << std::endl;
     }
 
 }
@@ -93,7 +92,7 @@ void sockets::bindOrDie(int sockfd, const struct sockaddr* addr) {
 void sockets::listenOrDie(int sockfd) {
     int ret = ::listen(sockfd, SOMAXCONN); // #define SOMAXCONN   128
     if (ret < 0) {
-        std::cout << "sockets::listenOrDie failed: " << ret << std::endl;
+        LOG << "sockets::listenOrDie failed: " << ret << std::endl;
     }
 }
 
@@ -108,7 +107,7 @@ int sockets::accept(int sockfd, struct sockaddr_in6* addr) {
     if (connfd < 0) {
         //若出现下面某些错误，系统可能会改变errno number，所以先把它保存起来。
         int savedErrno = errno;
-        std::cout << "accept" << std::endl;
+        LOG << "accept" << std::endl;
 
         switch (savedErrno) {
             case EAGAIN:
@@ -128,10 +127,10 @@ int sockets::accept(int sockfd, struct sockaddr_in6* addr) {
             case ENOMEM:
             case ENOTSOCK:
             case EOPNOTSUPP:
-                std::cout << "unexpected error of ::accept " << savedErrno << std::endl; //致命错误直接FATAL  
+                LOG << "unexpected error of ::accept " << savedErrno << std::endl; //致命错误直接FATAL  
                 break;
             default:
-                std::cout << "unkonwn error of ::accept " << savedErrno << std::endl;
+                LOG << "unkonwn error of ::accept " << savedErrno << std::endl;
                 break;
         }
 
@@ -159,14 +158,14 @@ ssize_t sockets::write(int sockfd, void* buf, size_t count) {
 // 关闭套接字 
 void sockets::close(int sockfd) {
     if (::close(sockfd) < 0) {
-        std::cout << "sockets::close failed." << std::endl;
+        LOG << "sockets::close failed." << std::endl;
     }
 }
 
 // 关闭套接字的写端 
 void sockets::shutdownWrite(int sockfd) {
     if (::shutdown(sockfd, SHUT_WR) < 0) {
-        std::cout << "sockets::shutdownWrite failed." << std::endl;
+        LOG << "sockets::shutdownWrite failed." << std::endl;
     }
 
 }
@@ -202,7 +201,7 @@ void sockets::fromIpPort(const char* ip, uint16_t port, struct sockaddr_in* addr
     addr->sin_family = AF_INET;
     addr->sin_port = hostToNetwork16(port);
     if (::inet_pton(AF_INET, ip, &addr->sin_addr) <= 0) {
-        std::cout << "sockets::fromIpPort failed." << std::endl;
+        LOG << "sockets::fromIpPort failed." << std::endl;
     }
 
 }
@@ -212,7 +211,7 @@ void sockets::fromIpPort(const char* ip, uint16_t port, struct sockaddr_in6* add
     addr->sin6_family = AF_INET6;
     addr->sin6_port = hostToNetwork16(port);
     if (::inet_pton(AF_INET6, ip, &addr->sin6_addr) <= 0) {
-        std::cout << "sockets::fromIpPort failed." << std::endl;
+        LOG << "sockets::fromIpPort failed." << std::endl;
     }
 
 }
@@ -252,7 +251,7 @@ struct sockaddr_in6 sockets::getLocalAddr(int sockfd) {
     bzero(&localaddr, sizeof(localaddr));
     socklen_t addrlen = static_cast<socklen_t>(sizeof(localaddr));
     if (::getsockname(sockfd, sockaddr_cast(&localaddr), &addrlen) < 0) {
-        std::cout << "sockets::getLocalAddr failed." << std::endl;
+        LOG << "sockets::getLocalAddr failed." << std::endl;
     }
 
     return localaddr;
@@ -264,7 +263,7 @@ struct sockaddr_in6 sockets::getPeerAddr(int sockfd) {
     bzero(&peeraddr, sizeof(peeraddr));
     socklen_t addrlen = static_cast<socklen_t>(sizeof(peeraddr));
     if (::getpeername(sockfd, sockaddr_cast(&peeraddr), &addrlen) < 0) {
-        std::cout << "sockets::getPeerAddr failed." << std::endl;
+        LOG << "sockets::getPeerAddr failed." << std::endl;
     }
 
     return peeraddr;

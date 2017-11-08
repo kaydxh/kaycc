@@ -3,9 +3,9 @@
 #include "eventloop.h"
 #include "timer.h"
 #include "timerid.h"
+#include "../base/log.h"
 
 #include <sys/timerfd.h>
-#include <iostream>
 #include <stdint.h>
 
 #include <boost/bind.hpp>
@@ -21,7 +21,7 @@ namespace detail {
     int createTimerfd() {
         int timerfd = ::timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
         if (timerfd < 0) {
-            std::cout << "Failed in timerfd_create" << std::endl;
+            LOG << "Failed in timerfd_create" << std::endl;
         }
 
         return timerfd;
@@ -45,10 +45,10 @@ namespace detail {
         uint64_t howmany;
 
         ssize_t n = ::read(timerfd, &howmany, sizeof(howmany));
-        std::cout << "TimerQueue::handleRead() " << howmany << " at " << now.toString() << std::endl;
+        LOG << "TimerQueue::handleRead() " << howmany << " at " << now.toString() << std::endl;
 
-        if (n != howmany) {
-            std::cout << "TimerQueue::handleRead() reads " << n << " bytes instead of 8" << std::endl;
+        if (n != sizeof(howmany)) {
+            LOG << "TimerQueue::handleRead() reads " << n << " bytes instead of 8" << std::endl;
         }
     }
     
@@ -71,7 +71,7 @@ namespace detail {
         newValue.it_value = howMuchTimeFromNow(expiration);
         int ret = ::timerfd_settime(timerfd, 0, &newValue, &oldValue);
         if (ret) {
-            std::cout << "timerfd_settime()" << std::endl;
+            LOG << "timerfd_settime()" << std::endl;
         }
 
     }
@@ -187,7 +187,7 @@ void TimerQueue::handleRead() {
 std::vector<TimerQueue::Entry> TimerQueue::getExpired(Timestamp now) {
     assert(timers_.size() == activeTimers_.size());
     std::vector<Entry> expired;
-    #define UINTPTR_MAX (2^32 - 1)
+    #define UINTPTR_MAX (4294967295U)
     Entry sentry(now, reinterpret_cast<Timer*>(UINTPTR_MAX));//UINTPTR_MAX, Maximum value of uintptr_t, 2^32-1, or higher
     // 获取所有超时时间比当前时间早的定时器，即已到期的定时器（timers_.begin()与end之间就是所有的已超时的定时器）
     TimerList::iterator end = timers_.lower_bound(sentry); //lower_bound返回第一个不小于sentry的位置

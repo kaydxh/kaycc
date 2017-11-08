@@ -1,6 +1,7 @@
 #include "epollpoller.h"
 
 #include "../channel.h"
+#include "../../base/types.h"
 
 //#include <boost/static_assert.hpp>
 
@@ -30,7 +31,9 @@ EPollPoller::EPollPoller(EventLoop* loop)
       events_(kInitEventListSize) { //vector这样用时初始化kInitEventListSize个大小空间  
 
     if (epollfd_ < 0) {
-        std::cout << "EPollPoller::EPollPoller failed." << std::endl;
+        LOG << "EPollPoller::EPollPoller failed." << std::endl;
+    } else {
+        LOG << "EPollPoller::EPollPoller:" << epollfd_ << std::endl;
     }
 
 }
@@ -40,7 +43,7 @@ EPollPoller::~EPollPoller() {
 }
 
 Timestamp EPollPoller::poll(int timeoutMs, ChannelList* activeChannels) {
-    std::cout << "fd total count " << channels_.size() << std::endl;
+    LOG << "fd total count " << channels_.size() << std::endl;
 
     int numEvents = ::epoll_wait(epollfd_,  ///使用epoll_wait()，等待事件返回,返回发生的事件数目  
                                  &*events_.begin(),
@@ -52,22 +55,23 @@ Timestamp EPollPoller::poll(int timeoutMs, ChannelList* activeChannels) {
         std::cout << numEvents << " events happended." << std::endl;
         fillActiveChannels(numEvents, activeChannels); //调用fillActiveChannels，传入numEvents也就是发生的事件数目
 
-        if (implicit_cast<size_t>(numEvents) == events.size()) { //如果返回的事件数目等于当前事件数组大小，就分配2倍空间  
-            events_.resize(events.size()*2);
+        if (implicit_cast<size_t>(numEvents) == events_.size()) { //如果返回的事件数目等于当前事件数组大小，就分配2倍空间  
+            events_.resize(events_.size()*2);
         }
 
     } else if (numEvents == 0) {
-        std::cout << "nothing happended" << std::endl
+        std::cout << "nothing happended" << std::endl;
 
     } else {
 
-        if (savedErrno != EINTER) { //如果不是EINTR信号，就把错误号保存下来，并且输入到日志中  
+        if (savedErrno != EINTR) { //如果不是EINTR信号，就把错误号保存下来，并且输入到日志中  
             errno = savedErrno;
-            std::cout << "EPollPoller::poll() error not EINTER:" << savedErrno << std::endl
+            std::cout << "EPollPoller::poll() error not EINTR:" << savedErrno << std::endl;
         }
 
     }
- 
+
+    return now;
 }
 
 void EPollPoller::fillActiveChannels(int numEvents, ChannelList* activeChannels) const {
@@ -83,7 +87,7 @@ void EPollPoller::fillActiveChannels(int numEvents, ChannelList* activeChannels)
         assert(it->second == channel);
     #endif
 
-        channel->set_revent(events_[i].events); //把已发生的事件传给channel,写到通道当中
+        channel->set_revents(events_[i].events); //把已发生的事件传给channel,写到通道当中
         activeChannels->push_back(channel); //并且push_back进activeChannels
     }
 
@@ -93,13 +97,14 @@ void EPollPoller::fillActiveChannels(int numEvents, ChannelList* activeChannels)
 void EPollPoller::updateChannel(Channel* channel) {
     Poller::assertInLoopThread();
     const int index = channel->index();
-    std::cout << "fd=" << channel->fd() << " events=" << channel->events() << " index=" << index;
+    LOG << "fd=" << channel->fd() << " events=" << channel->events() << " index=" << index << std::endl;
 
     if (index == kNew || index == kDeleted) {
         int fd = channel->fd();
         if (index == kNew) { //a new one
             assert(channels_.find(fd) == channels_.end());
             channels_[fd] = channel;
+
         } else { // 已经删除的
             assert(channels_.find(fd) != channels_.end());
             assert(channels_[fd] == channel);
@@ -130,7 +135,7 @@ void EPollPoller::updateChannel(Channel* channel) {
 void EPollPoller::removeChannel(Channel* channel) {
     Poller::assertInLoopThread();
     int fd = channel->fd();
-    std::cout << "fd = " << fd << std::endl;
+    LOG << "fd = " << fd << std::endl;
     assert(channels_.find(fd) != channels_.end());
     assert(channels_[fd] == channel);
     assert(channel->isNoneEvent());
@@ -156,7 +161,7 @@ void EPollPoller::update(int operation, Channel* channel) {
 
     int fd = channel->fd();
 
-    std::cout << "epoll_ctl op = " << operationToString(operation)
+    LOG << "epoll_ctl op = " << operationToString(operation)
         << " fd = " << fd << " event = { " << channel->eventsToString() << " }" << std::endl;
 
     if (::epoll_ctl(epollfd_, operation, fd, &event) < 0) {
@@ -180,10 +185,8 @@ const char* EPollPoller::operationToString(int op) {
         case EPOLL_CTL_MOD:
             return "MOD";
         default:
-            assert(false && "ERROR op")
+            assert(false && "ERROR op");
             return "Unknown Operation";
-
-
     }
 
 }
