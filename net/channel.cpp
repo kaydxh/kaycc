@@ -2,6 +2,7 @@
 #include "eventloop.h"
 
 #include <sstream>
+#include <iostream>
 
 #include <poll.h>
 using namespace kaycc;
@@ -37,7 +38,7 @@ Channel::~Channel() {
     }
 }
 
-void Channel::tie(const boost::share_ptr<void>& obj) {
+void Channel::tie(const boost::shared_ptr<void>& obj) {
     tie_ = obj;
     tied_ = true; 
 }
@@ -55,7 +56,7 @@ void Channel::remove() {
 }
 
 void Channel::handleEvent(Timestamp receiveTime) {
-    boost::share_ptr<void> guard;
+    boost::shared_ptr<void> guard;
     if (tied_) {
         guard = tie_.lock();
         if (guard) {
@@ -81,7 +82,9 @@ void Channel::handleEventWithGuard(Timestamp receiveTime) {
         std::cout << "fd = " << fd_ << " Channel::handleEvent POLLNVAL" << std::endl;
     }
 
-    if (revents_ & (POLLEER | POLLNVAL)) {
+    //POLLERR，仅用于内核设置传出参数revents，表示设备发生错误
+    //POLLNVAL，仅用于内核设置传出参数revents，表示非法请求文件描述符fd没有打开
+    if (revents_ & (POLLERR | POLLNVAL)) {
         if (errorCallback_) {
             errorCallback_();
         }
@@ -91,7 +94,7 @@ void Channel::handleEventWithGuard(Timestamp receiveTime) {
     //POLLPRI　　　　有紧迫数据可读
     if (revents_ & (POLLIN | POLLPRI | POLLRDHUP)) {
         if (readCallback_) {
-            readCallback_();
+            readCallback_(receiveTime);
         }
     }
 
@@ -149,6 +152,14 @@ std::string Channel::eventsToString(int fd, int ev) {
     }
 
     return oss.str();
+}
+
+std::string Channel::reventsToString() const {
+    return eventsToString(fd_, revents_);
+}
+
+std::string Channel::eventsToString() const {
+    return eventsToString(fd_, events_);
 }
 
 

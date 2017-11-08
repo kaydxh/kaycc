@@ -21,6 +21,7 @@ namespace kaycc {
 
             }
 
+        std::string toString() const;
         ////两个时间戳进行交换
         void swap(Timestamp& that) {
             std::swap(microSecondsSinceEpoch_, that.microSecondsSinceEpoch_);

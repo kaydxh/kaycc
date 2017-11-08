@@ -1,6 +1,14 @@
 #include "timerqueue.h"
 
+#include "eventloop.h"
+#include "timer.h"
+#include "timerid.h"
+
 #include <sys/timerfd.h>
+#include <iostream>
+#include <stdint.h>
+
+#include <boost/bind.hpp>
 
 namespace kaycc {
 namespace net {
@@ -80,18 +88,34 @@ using namespace kaycc::net::detail;
 TimerQueue::TimerQueue(EventLoop* loop)
     : loop_(loop),
       timerfd_(createTimerfd()),
+      timerfdChannel_(loop, timerfd_),
+      timers_(),
       callingExpiredTimers_(false) {
+
+    // 设置超时的回调函数,处理读事件
+    timerfdChannel_.setReadCallback(
+        boost::bind(&TimerQueue::handleRead, this));
+
+     // 设置为可读  
+    timerfdChannel_.enableReading();
 
 }
 
+/* 
+ * 销毁定时器队列 
+ */ 
 TimerQueue::~TimerQueue() {
+    timerfdChannel_.disableAll();
+    timerfdChannel_.remove(); //从当前eventloop中移除
     ::close(timerfd_);
+
     for (TimerList::iterator it = timers_.begin(); 
         it != timers_.end(); ++it) {
         delete it->second;
     }
 }
 
+// 添加一个定时器 
 TimerId TimerQueue::addTimer(const TimerCallback& cb, Timestamp when, double interval) {
     Timer* timer = new Timer(cb, when, interval);
     loop_->runInLoop(
@@ -100,16 +124,41 @@ TimerId TimerQueue::addTimer(const TimerCallback& cb, Timestamp when, double int
     return TimerId(timer, timer->sequence());
 }
 
-void TimerQueue::cancel(TimerId, timerid) {
+void TimerQueue::cancel(TimerId timerId) {
     loop_->runInLoop(
-        boost::bind(&TimerQueue::cancelInLoop, this, timerid));
+        boost::bind(&TimerQueue::cancelInLoop, this, timerId));
 }
 
+// 添加定时器（在Reactor的循环中添加）
 void TimerQueue::addTimerInLoop(Timer* timer) {
+    loop_->assertInLoopThread();
+    bool earliestChanged = insert(timer);
+    if (earliestChanged) { //如果该计时器是最早超时的那个，需要重新设置系统定时器的超时事件
+        // 重新设置系统定时器的超时时间  
+        resetTimerfd(timerfd_, timer->expiration());
+    }
 
 }
 
-void TimerQueue::cancelInLoop(TimerId timerid) {
+void TimerQueue::cancelInLoop(TimerId timerId) {
+    loop_->assertInLoopThread();
+    assert(timers_.size() == activeTimers_.size());
+    ActiveTimer timer(timerId.timer_, timerId.sequence_);
+
+    ActiveTimerSet::iterator it = activeTimers_.find(timer);
+    if (it != activeTimers_.end()) { //如果活动的计时器队列里有该计数器，就删除
+        size_t n = timers_.erase(Entry(it->first->expiration(), it->first));
+        assert(n == 1); (void)n;
+        delete it->first;
+        activeTimers_.erase(it);
+
+    } else if (callingExpiredTimers_) {
+        // 如果没有这个定时器（表示它已经超时，正在被处理），而且又是正在处理已超时定时器，那么把它插入到正在取消的定时器对列中  
+        // 等待处理超时定时器的工作完成，调用reset的时候会将其删除  
+        cancelingTimers_.insert(timer);
+    }
+
+    assert(timers_.size() == activeTimers_.size());
 
 }
 
@@ -138,13 +187,14 @@ void TimerQueue::handleRead() {
 std::vector<TimerQueue::Entry> TimerQueue::getExpired(Timestamp now) {
     assert(timers_.size() == activeTimers_.size());
     std::vector<Entry> expired;
-    Entry sentry(now, reinterpret_cast<Timer*>(UINTPTR_MAX));//UINTPTR_MAX, Maximum value of uintptr_t, 2^16-1, or higher
+    #define UINTPTR_MAX (2^32 - 1)
+    Entry sentry(now, reinterpret_cast<Timer*>(UINTPTR_MAX));//UINTPTR_MAX, Maximum value of uintptr_t, 2^32-1, or higher
     // 获取所有超时时间比当前时间早的定时器，即已到期的定时器（timers_.begin()与end之间就是所有的已超时的定时器）
     TimerList::iterator end = timers_.lower_bound(sentry); //lower_bound返回第一个不小于sentry的位置
     assert(end == timers_.end() || now < end->first);
 
     // 将已超时的定时器复制到expired中
-    std::copy(timers_.begin(), end, std::back_insert(expired));
+    std::copy(timers_.begin(), end, std::back_inserter(expired));
     timers_.erase(timers_.begin(), end);
 
     for (std::vector<Entry>::iterator it = expired.begin(); it != expired.end(); ++it) {
@@ -161,7 +211,7 @@ std::vector<TimerQueue::Entry> TimerQueue::getExpired(Timestamp now) {
 // 重置所有周期性的定时器 
 void  TimerQueue::reset(const std::vector<Entry>& expired, Timestamp now) {
     // 下一次的超时时间
-    Timerstamp nextExpire;
+    Timestamp nextExpire;
     for (std::vector<Entry>::const_iterator it = expired.begin(); it != expired.end(); ++it) {
         ActiveTimer timer(it->second, it->second->sequence());
 
@@ -170,7 +220,7 @@ void  TimerQueue::reset(const std::vector<Entry>& expired, Timestamp now) {
             && cancelingTimers_.find(timer) == cancelingTimers_.end()) {
 
             // 重新设置超时时间, 此时restart()内部会更新timer的expiration_
-            it->second->restart();
+            it->second->restart(now);
             // 再次插入计时器队列中
             insert(it->second);
         } else {
@@ -180,9 +230,10 @@ void  TimerQueue::reset(const std::vector<Entry>& expired, Timestamp now) {
     }
 
     if (!timers_.empty()) {
-        nextExpire = timers.begin()->second->expiration();
+        nextExpire = timers_.begin()->second->expiration();
     }
 
+    // 重新设置系统计时器的超时时间  
     if (nextExpire.valid()) {
         resetTimerfd(timerfd_, nextExpire);
     }
@@ -194,7 +245,7 @@ bool TimerQueue::insert(Timer* timer) {
     assert(timers_.size() == activeTimers_.size());
 
     bool earliestChanged = false;
-    Timerstamp when = timer->expiration();
+    Timestamp when = timer->expiration();
 
     // 如果计时器队列是空的或者它比计时器队列中最早超时的那个计时器的超时时间还要早  
     // 那么当前计时器就是最早发生超时的那个计时器 
@@ -205,7 +256,7 @@ bool TimerQueue::insert(Timer* timer) {
 
     {
         std::pair<TimerList::iterator, bool> result = timers_.insert(Entry(when, timer)); //插入成功，result->second 为true，如果眼睛存在，为false
-        assert(result.second); (void) resutl;
+        assert(result.second); (void) result;
     }
 
     {

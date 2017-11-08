@@ -3,7 +3,7 @@
 
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
-#include <boost/share_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 
 #include "../base/timestamp.h"
@@ -47,44 +47,51 @@ namespace net {
         /// Tie this channel to the owner object managed by shared_ptr,
         /// prevent the owner object being destroyed in handleEvent.
         // 把当前事件处理器依附到某一个对象上
-        void tie(const boost::share_ptr<void>&);
+        void tie(const boost::shared_ptr<void>&);
 
         int fd() const {
             return fd_;
         }
 
+        //注册的事件
         int events() const {
             return events_;
         }
 
-        void set_revents(int revt) {
+        void set_revents(int revt) { // used by pollers，发生的事件
             revents_ = revt;
         } 
 
+        //判断是否无关注事件类型，events为0 
         bool isNoneEvent() const {
             return events_ == kNoneEvent;
         }
 
+        //关注可读事件，注册到EventLoop，通过它注册到Poller中  
         void enableReading() {
             events_ |= kReadEvent;
             update();
         }
 
+        //取消读关注 
         void disableReading() {
             events_ &= ~kReadEvent;
             update();
         }
 
+        //关注写事件
         void enableWriting() {
             events_ |= kWriteEvent;
             update();
         }
 
+        //取消写关注 
         void disableWriting() {
             events_ &= ~kWriteEvent;
             update();
         }
 
+        //全部关闭 
         void disableAll() {
             events_ = kNoneEvent;
             update();
@@ -98,6 +105,7 @@ namespace net {
             return events_ & kReadEvent;
         }
 
+        // for Poller pollfds_数组中的下标
         int index() {
             return index_;
         }
@@ -106,15 +114,15 @@ namespace net {
             index_ = idx;
         }
 
-        std::string reventsToString() const;
-        std::string eventsToString() const;
+        std::string reventsToString() const; //事件转化为字符串，方便打印调试 
+        std::string eventsToString() const; //事件转化为字符串，方便打印调试 
 
         // 所属的事件循环 
-        EventLoop* ownerloop() {
+        EventLoop* ownerLoop() {
             return loop_;
         }
 
-        // 从事件循环对象中把自己(channel, 事件处理器)删除 
+        // 从事件循环对象中把自己(channel, 事件通道)删除 
         void remove();
 
     private:
@@ -127,6 +135,7 @@ namespace net {
         static const int kReadEvent;
         static const int kWriteEvent;
 
+        EventLoop* loop_;
         const int fd_;
         int events_; //关心的事件
 

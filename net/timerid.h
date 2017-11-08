@@ -19,7 +19,7 @@ namespace net {
 
               }
 
-        friend class TimeQueue;
+        friend class TimerQueue;
 
     private:
         Timer* timer_;

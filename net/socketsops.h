@@ -38,9 +38,14 @@ namespace sockets{
     ssize_t readv(int sockfd, const struct iovec* iov, int iovcnt);
     ssize_t write(int sockfd, void* buf, size_t count);
     void close(int sockfd);
+
+    // 关闭套接字的写端 
     void shutdownWrite(int sockfd);
 
+    //用sockaddr_in对象构造ip与端口的字符串 ,如127.0.0.1:8080
     void toIpPort(char* buf, size_t size, const struct sockaddr* addr);
+
+    // 从sockaddr_in中获取ip字符串 
     void toIp(char* buf, size_t size, const struct sockaddr* addr);
 
     /*
@@ -56,6 +61,7 @@ namespace sockets{
       unsigned int s_addr;           // Internet address   
     }; 
     */  
+    // 从ip和端口构造一个sockaddr_in对象  
     void fromIpPort(const char* ip, uint16_t port, struct sockaddr_in* addr);
 
 
@@ -72,9 +78,10 @@ namespace sockets{
         uint8_t s6_addr[16];            // IPv6 address 
     };
     */
-
+    // 从ip和端口构造一个sockaddr_i6对象 
     void fromIpPort(const char* ip, uint16_t port, struct sockaddr_in6* addr);
 
+    // 获取错误码 getsockopt
     int getSocketError(int sockfd);
 
     const struct sockaddr* sockaddr_cast(const struct sockaddr_in* addr);
@@ -84,8 +91,13 @@ namespace sockets{
     const struct sockaddr_in* sockaddr_in_cast(const struct sockaddr* addr);
     const struct sockaddr_in6* sockaddr_in6_cast(const struct sockaddr* addr);
 
+    // 获取本地地址  getsockname
     struct sockaddr_in6 getLocalAddr(int sockfd);
+
+    // 获取对方地址
     struct sockaddr_in6 getPeerAddr(int sockfd);
+
+    // 是否为自己连接自己（环路地址）
     bool isSelfConnect(int sockfd);
 
 

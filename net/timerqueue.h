@@ -3,14 +3,17 @@
 
 #include <set>
 #include <vector>
-#include <boost/noncopyable>
+#include <boost/noncopyable.hpp>
 
 #include "../base/timestamp.h"
 #include "callbacks.h"
+#include "channel.h"
 
 namespace kaycc {
 namespace net {
     class EventLoop;
+    class Timer;
+    class TimerId;
 
     class TimerQueue : boost::noncopyable {
     public:
@@ -41,8 +44,12 @@ namespace net {
 
         bool insert(Timer* timer);
 
+        // 所属的Reactor
         EventLoop* loop_;
         const int timerfd_; //定时器文件描述符（Reactor用这个文件描述符产生的事件激活定时器事件处理器）
+
+        // 定时器事件通道
+        Channel timerfdChannel_;
 
         TimerList timers_; //活动定时器列表,与activeTimers_存放的timer一致，只是，一个以Timestamp作为key，一个以Timer*作为key
 
