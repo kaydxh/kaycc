@@ -5,7 +5,7 @@
 #include "socketsops.h"
 
 #include <netdb.h>
-#include <string.h> //bzero
+#include <strings.h> //bzero
 #include <netinet/in.h>
 #include <assert.h>
 
