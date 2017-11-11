@@ -3,15 +3,25 @@
 #include "../channel.h"
 #include "../../base/types.h"
 
-//#include <boost/static_assert.hpp>
+#include <boost/static_assert.hpp>
 
 #include <assert.h>
 #include <errno.h>
+#include <poll.h>
 #include <sys/epoll.h>
 #include <unistd.h>
 
 using namespace kaycc;
 using namespace kaycc::net;
+
+// On Linux, the constants of poll(2) and epoll(4)
+// are expected to be the same.
+BOOST_STATIC_ASSERT(EPOLLIN == POLLIN);
+BOOST_STATIC_ASSERT(EPOLLPRI == POLLPRI);
+BOOST_STATIC_ASSERT(EPOLLOUT == POLLOUT);
+BOOST_STATIC_ASSERT(EPOLLRDHUP == POLLRDHUP);
+BOOST_STATIC_ASSERT(EPOLLERR == POLLERR);
+BOOST_STATIC_ASSERT(EPOLLHUP == POLLHUP);
 
 namespace {
     const int kNew = -1;
