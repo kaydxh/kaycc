@@ -16,7 +16,7 @@ namespace currentthread {
 	void cacheTid();
 
 	inline int tid() {
-		if (__builtin_expect(t_cachedTid == 0, 0)) {
+		if (__builtin_expect(t_cachedTid == 0, 0)) { //t_cachedTid不太可能为0
 			cacheTid();
 		}
 

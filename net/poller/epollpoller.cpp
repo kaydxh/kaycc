@@ -14,6 +14,29 @@
 using namespace kaycc;
 using namespace kaycc::net;
 
+/*
+namespace boost{
+    //这个模板类只有声明,没有定义
+    //注意:这里没有{}
+    //所以如果定义这个类型的对象将会失败
+    template <bool x> struct STATIC_ASSERTION_FAILURE;
+
+     //一个true类型的完全特化,并且带定义
+    template <> struct STATIC_ASSERTION_FAILURE<true> { enum { value = 1 }; };
+
+    template<int x> struct static_assert_test{};
+
+    //如果(bool)(B)为false，那么sizeof(::boost::STATIC_ASSERTION_FAILURE< (bool)( B ) >)报错
+    //error: invalid application of ‘sizeof’ to incomplete type ‘STATIC_ASSERTION_FAILURE<false>’
+
+    #define BOOST_STATIC_ASSERT( B ) \
+       typedef ::boost::static_assert_test<\
+          sizeof(::boost::STATIC_ASSERTION_FAILURE< (bool)( B ) >)\
+          > boost_static_assert_typedef_
+
+}
+*/
+
 // On Linux, the constants of poll(2) and epoll(4)
 // are expected to be the same.
 BOOST_STATIC_ASSERT(EPOLLIN == POLLIN);

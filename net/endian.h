@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <endian.h>
 
+#include <arpa/inet.h> //htonl
+
 namespace kaycc {
 namespace net {
 namespace sockets {

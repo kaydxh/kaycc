@@ -20,6 +20,14 @@ namespace {
 
     const int kPollTimeMs = 10000;
 
+/*
+    先说第一点，线程（进程）间通信有很多种方式（pipe,socketpair），为什么这里选择eventfd？
+
+    eventfd 是一个比 pipe 更高效的线程间事件通知机制，一方面它比 pipe 少用一个 file descripor，节省了资源；另一方面，eventfd 的缓冲区管理也简单得多，全部“buffer” 只有定长8 bytes，不像 pipe 那样可能有不定长的真正 buffer。
+    最重要的一点：当我们想要编写并发型服务器的时候，eventfd 可以完美取代 pipe去通知(唤醒)其他的进程(线程)。比如经典的异步IO reactor/selector 应用场景，去唤醒select的调用。可以和事件通知机制完美的的结合
+
+*/
+
 /**
     eventfd()创建了一个"eventfd object"，能在用户态用做事件wait/notify机制，通过内核取唤醒用户态的事件。这个对象保存了一个内核维护的uint64_t类型的整型counter。这个counter初始值被参数initval指定，一般初值设置为0。
 */

@@ -86,7 +86,7 @@ public:
         return addr_.sin_port;
     }
 
-     // 把主机名转换成ip地址，线程安全 
+    // 把主机名转换成ip地址，线程安全 
     static bool resolve(const std::string& hostname, InetAddress* out);
 
 private:

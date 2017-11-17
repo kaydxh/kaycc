@@ -68,7 +68,7 @@ namespace net {
         // 在delay秒之后调用回调函数 
         TimerId runAfter(double delay, const TimerCallback& cb);
 
-        // 每隔interval妙调用一次回调函数
+        // 每隔interval秒调用一次回调函数
         TimerId runEvery(double interval, const TimerCallback& cb);
 
         // 取消一个计时器
