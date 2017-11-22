@@ -72,7 +72,7 @@ void Connector::connect() {
         case 0:
         case EINPROGRESS: //非阻塞套接字，未连接成功返回码是EINPROGRESS表示正在连接  
         case EINTR:
-        case EISCONN: //连接成功
+        case EISCONN: //Transport endpoint is already connected
             connecting(sockfd);
             break;
 
