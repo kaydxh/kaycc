@@ -37,6 +37,7 @@ namespace sockets {
 		return be16toh(host16);
 	}
 
+#if 0
 	//本地字节序int64转网络字节序
 	uint64_t htonll(uint64_t v)
 	{
@@ -61,6 +62,7 @@ namespace sockets {
     	u.llv = v;
     	return ((uint64_t)ntohl(u.lv[0]) << 32) | (uint64_t)ntohl(u.lv[1]);
 	}
+#endif
 } //end sockets
 } //end net
 }
