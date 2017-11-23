@@ -43,7 +43,7 @@ namespace net {
         }
 
         // 是否正在监听
-        bool listening() const {
+        bool listenning() const {
             return listenning_;
         } 
 

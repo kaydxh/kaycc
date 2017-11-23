@@ -30,6 +30,7 @@ void kaycc::net::defaultConnectionCallback(const TcpConnectionPtr& conn) {
  * 默认的数据到来的回调函数————丢弃！所以必须要设置自己的消息回调函数 
  */  
 void kaycc::net::defaultMessageCallback(const TcpConnectionPtr& , Buffer* buffer, Timestamp) {
+    LOG << "defaultMessageCallback in" << std::endl;
     buffer->retrieveAll();
 }
 
