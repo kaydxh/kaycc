@@ -203,6 +203,43 @@ TimerId EventLoop::runEvery(double interval, const TimerCallback& cb) {
     return timerQueue_->addTimer(cb, time, interval);
 }
 
+#if _cplusplus >= 201103L
+void EventLoop::runInLoop(const Functor&& cb) {
+    if (isInLoopThread()) {
+        cb();
+    } else {
+        // 如果不是同一个线程，那么将他添加到投递回调函数队列中
+        queueInLoop(std::move(cb));
+    }
+}
+
+void EventLoop::queueInLoop(const Functor&& cb) {
+    {
+        MutexLockGuard lock(mutex_);
+        pendingFunctors_.push_back(std::move(cb));
+    }
+
+    if (!isInLoopThread() || callingPendingFunctors_) {
+        wakeup();
+    }
+
+}
+
+TimerId EventLoop::runAt(const Timestamp& time, const TimerCallback&& cb) {
+    return timerQueue_->addTimer(std::move(cb), time, 0.0);
+}
+
+TimerId EventLoop::runAfter(double delay, const TimerCallback&& cb) {
+    Timestamp time(addTime(Timestamp::now(), delay));
+    return runAt(time, std::move(cb));
+}
+
+TimerId EventLoop::runEvery(double interval, const TimerCallback&& cb) {
+    Timestamp time(addTime(Timestamp::now(), interval));
+    return timerQueue_->addTimer(std::move(cb), time, interval);
+}
+#endif
+
 // 取消一个计时器
 void EventLoop::cancel(TimerId timerId) {
     return timerQueue_->cancel(timerId);

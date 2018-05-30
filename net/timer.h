@@ -21,6 +21,17 @@ namespace net {
 
             }
 
+    #if __cpluscplus >= 201103L
+        Timer(const TimerCallback&& cb, Timestamp when, double interval)
+            : callback_(std::move(cb)),
+              expiration_(when),
+              interval_(interval),
+              repeat_(interval > 0),
+              sequence_(s_numCreated_.incrementAndGet()) {
+
+            }
+    #endif
+
         void run() const {
             callback_();
         }

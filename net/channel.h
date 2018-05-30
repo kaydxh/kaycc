@@ -44,6 +44,24 @@ namespace net {
             errorCallback_ = cb;
         }
 
+    #if __cplusplus >= 201103L
+        void setReadCallback(const ReadEventCallback&& cb) {
+            readCallback_ = std::move(cb);
+        }
+
+        void setWriteCallback(const EventCallback&& cb) {
+            writeCallback_ = std::move(cb);
+        }
+
+        void setCloseCallback(const EventCallback&& cb) {
+            closeCallback_ = std::move(cb);
+        }
+
+        void setErrorCallback(const EventCallback&& cb) {
+            errorCallback_ = std::move(cb);
+        }
+    #endif
+
         /// Tie this channel to the owner object managed by shared_ptr,
         /// prevent the owner object being destroyed in handleEvent.
         // 把当前事件处理器依附到某一个对象上

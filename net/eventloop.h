@@ -62,6 +62,11 @@ namespace net {
 
         size_t queueSize() const;
 
+    #if _cplusplus >= 201103L
+        void runInLoop(const Functor&& cb);
+        void queueInLoop(const Functor&& cb);
+    #endif
+
         // 在指定的时间调用回调函数
         TimerId runAt(const Timestamp& time, const TimerCallback& cb);
 
@@ -70,6 +75,12 @@ namespace net {
 
         // 每隔interval秒调用一次回调函数
         TimerId runEvery(double interval, const TimerCallback& cb);
+
+    #if _cplusplus >= 201103L
+        TimerId runAt(const Timestamp& time, const TimerCallback&& cb);
+        TimerId runAfter(double delay, const TimerCallback&& cb);
+        TimerId runEvery(double interval, const TimerCallback&& cb);
+    #endif
 
         // 取消一个计时器
         void cancel(TimerId timerId);

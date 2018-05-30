@@ -124,6 +124,16 @@ TimerId TimerQueue::addTimer(const TimerCallback& cb, Timestamp when, double int
     return TimerId(timer, timer->sequence());
 }
 
+#if __cpluscplus >= 201103L
+ TimerId TimerQueue::addTimer(const TimerCallback&& cb, Timestamp when, double interval) {
+    Timer* timer = new Timer(std::move(cb), when, interval);
+    loop_->runInLoop(
+        boost::bind(&TimerQueue::addTimerInLoop, this, timer));
+
+    return TimerId(timer, timer->sequence());
+}
+#endif
+
 void TimerQueue::cancel(TimerId timerId) {
     loop_->runInLoop(
         boost::bind(&TimerQueue::cancelInLoop, this, timerId));

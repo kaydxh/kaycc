@@ -63,6 +63,20 @@ namespace net {
             writeCompleteCallback_ = cb;
         }
 
+    #if __cpluscplus >= 201103L
+        void setConnectionCallback(const ConnectionCallback&& cb) {
+            connectionCallback_ = std::move(cb);
+        }
+
+        void setMessageCallback(const MessageCallback&& cb) {
+            messageCallback_ = std::move(cb);
+        }
+
+        void setWriteCompleteCallback(const WriteCompleteCallback&& cb) {
+            writeCompleteCallback_ = std::move(cb);
+        }
+    #endif
+
     private:
         // 连接建立完毕会调用这个函数
         void newConnection(int sockfd);

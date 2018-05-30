@@ -23,6 +23,9 @@ namespace net {
         /// Must be thread safe. Usually be called from other threads.  
         // 添加一个定时器 
         TimerId addTimer(const TimerCallback& cb, Timestamp when, double interval);
+    #if __cpluscplus >= 201103L
+        TimerId addTimer(const TimerCallback&& cb, Timestamp when, double interval);
+    #endif
 
         // 取消一个定时器  
         void cancel(TimerId timerId);

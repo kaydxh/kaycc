@@ -21,7 +21,7 @@ namespace detail {
         loop->queueInLoop(boost::bind(&TcpConnection::connectDestroyed, conn));
     }
 
-    void removeConnector(const ConnectorPtr& connector) {
+    void removeConnector(const ConnectorPtr& /*connector*/) {
         //connector->
     }
 
