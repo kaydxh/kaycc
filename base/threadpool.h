@@ -34,6 +34,9 @@ namespace kaycc {
         size_t queueSize() const;
 
         void run(const TaskFunc& f);
+    #if __cplusplus >= 201103L
+        void run(TaskFunc&& f);
+    #endif
 
     private:
         bool isFull() const;

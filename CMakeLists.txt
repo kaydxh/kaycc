@@ -3,7 +3,7 @@ project(kaycc)
 
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wno-deprecated  -W -Wall -pthread -Wno-missing-braces -Wparentheses")
 
-#set(CXX_FLAGS
+set(CXX_FLAGS
 # -g
  # -DVALGRIND
  # -DMUDUO_STD_STRING
@@ -21,9 +21,9 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wno-deprecated  -W -Wall -pthread -
  #-Wwrite-strings
  #-march=native
  # -MMD
- # -std=c++0x
+   -std=c++11
  #-rdynamic
- #)
+ )
 
 
 aux_source_directory(./base BASE)

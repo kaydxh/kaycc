@@ -136,6 +136,19 @@ Thread::Thread(const ThreadFunc &func, const std::string &n)
 	  latch_(1) {
 		  setDefaultName();
 	  }
+
+#if __cplusplus >= 201103L
+Thread::Thread(ThreadFunc&& func, const std::string& n)
+	: started_(false),
+	  joined_(false),
+	  pthreadId_(0),
+	  tid(0),
+	  func(std::move(func)),
+	  name_(n),
+	  latch_(1) {
+		  setDefaultName();
+	  }
+#endif
 	
 Thread::~Thread() {
 	if (started_ && !joined_) {//如果线程已经启动，但是没有join，那么通过调用pthread_detach分离线程，这样该线程运行结束后会自动释放所有资源

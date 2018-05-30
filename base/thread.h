@@ -18,6 +18,9 @@ namespace kaycc {
 			typedef boost::function<void ()> ThreadFunc;
 
 			explicit Thread(const ThreadFunc&, const std::string& name = std::string());
+		#if __cplusplus >= 201103L
+			explicit Thread(ThreadFunc&&, const std::string& name = std::string());
+		#endif
 
 			~Thread();
 

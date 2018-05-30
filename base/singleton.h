@@ -6,7 +6,11 @@ namespace detail {
     //SFINA原则，测试是否有成员函数no_destroy，但是不会探测到继承的成员函数
     template <typename T>
     struct has_no_destroy {
+    #if __cplusplus >= 201103L
+        template <typename C> static char test(decltype(&C::no_destroy));
+    #else
         template <typename C> static char test(typeof(&C::no_destroy));
+    #endif
         template <typename C> static int32_t test(...);
         const static bool value = sizeof(test<T>(0)) == 1; //如果C有no_destroy函数，就会匹配char test(typeof(&C::no_destroy))，
             //因此返回值的类型大小就是1（char），否则，就会匹配int32_t test(...)，返回值的类型大小的是4（int32_t)，test<T>(0),相当于将T传给C，

@@ -79,6 +79,23 @@ void ThreadPool::run(const TaskFunc& task) {
 
 }
 
+#if __cplusplus >= 201103L
+void ThreadPool::run(TaskFunc&& task) {
+    if (threads_.empty()) {
+        task();
+    } else {
+        MutexLockGuard lock(mutex_);
+        while (isFull()) {
+            notFull_.wait();
+        }
+
+        assert(!isFull());
+        queue_.push_back(std::move(task));
+        notEmpty_.notify();
+    }
+}
+#endif
+
 ThreadPool::TaskFunc ThreadPool::takeTask() {
     MutexLockGuard lock(mutex_);
 

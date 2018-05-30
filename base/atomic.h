@@ -52,7 +52,8 @@ namespace atomics {
 			}
 
 		private:
-			volatile T value_;
+			volatile T value_; //volatile 这个关键字来避免编译时内存乱序访问 如：
+							   // x = y; y = 1;编译器优化的结果可能导致 y = 1 在 x = r 之前执行完成
 	};
 }
 	typedef atomics::AtomicInteger<int32_t> AtomicInt32;
